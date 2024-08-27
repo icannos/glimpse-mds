@@ -1,7 +1,24 @@
 
-# GLIMPSE: Pragmatically Informative Multi-Document Summarization for Scholarly Reviews
-
+This is the repositotry of  GLIMPSE: Pragmatically Informative Multi-Document Summarization for Scholarly Reviews
 [Paper](https://arxiv.org/abs/2406.07359) | [Code](https://github.com/icannos/glimpse-mds)
+
+
+### Installation
+- We use python 3.10 and CUDA 12.1
+- First, create a virtual environment using:
+``` bash
+conda create -n glimpse python=3.10
+```
+
+- Second, install pytorch via the following command:
+``` bash
+conda install pytorch==2.1.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+```
+- Finally, all remaining required packages could be installed with the requirements file:
+
+``` bash
+pip install -r requirements
+```
 
 
 `rsasumm/` provides a python package with an implementation of RSA incremental decoding and RSA reranking of candidates.
