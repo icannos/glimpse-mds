@@ -7,6 +7,7 @@ from datasets import Dataset
 from tqdm import tqdm
 
 import nltk
+import re
 
 
 def parse_args():
@@ -53,6 +54,7 @@ def evaluate_summarizer(dataset: Dataset) -> Dataset:
     @return: The same dataset with the summaries added
     """
     # create a dataset with the text and the summary
+    # TODO: text??
 
     # create a dataloader
 
@@ -60,10 +62,11 @@ def evaluate_summarizer(dataset: Dataset) -> Dataset:
     summaries = []
     print("Generating summaries...")
 
+    # (tqdm library for progress bar) 
     for sample in tqdm(dataset):
-        text = sample["text"]
+        text = sample["review"] # TODO: changed from 'text' to 'review', it worked
 
-        text = text.replace('-----', '\n')
+        text = re.sub(r'-{4,}', '\n', text) # replace long dashes with new line
         sentences = nltk.sent_tokenize(text)
         # remove empty sentences
         sentences = [sentence for sentence in sentences if sentence != ""]
