@@ -12,8 +12,8 @@ import re
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_name", type=str, default="2017")
-    parser.add_argument("--dataset_path", type=str, default="data")
+    parser.add_argument("--dataset_name", type=int, default=2017)
+    parser.add_argument("--dataset_path", type=str, default="data/processed")
 
 
     parser.add_argument("--output_dir", type=str, default="output")
@@ -28,17 +28,9 @@ def parse_args():
 
 def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
     if dataset_path is not None:
-        dataset_path = Path(dataset_path)
-    if dataset_name == "2017":
-        dataset = pd.read_csv(dataset_path / "all_reviews_2017_sep.csv")
-    elif dataset_name == "2018":
-        dataset = pd.read_csv(dataset_path / "all_reviews_2018_sep.csv")
-    elif dataset_name == "2019":
-        dataset = pd.read_csv(dataset_path / "all_reviews_2019_sep.csv")
-    elif dataset_name == "2020":
-        dataset = pd.read_csv(dataset_path / "all_reviews_2020.csv")
-    elif dataset_name == "2021":
-        dataset = pd.read_csv(dataset_path / "all_reviews_2021.csv")
+        dataset_path = Path(dataset_path)   
+    if dataset_name in range (2017,2021):
+        dataset = pd.read_csv(dataset_path / f"all_reviews_{dataset_name}.csv")
     else:
         raise ValueError(f"Unknown dataset {dataset_name}")
 
@@ -54,7 +46,6 @@ def evaluate_summarizer(dataset: Dataset) -> Dataset:
     @return: The same dataset with the summaries added
     """
     # create a dataset with the text and the summary
-    # TODO: text??
 
     # create a dataloader
 
@@ -64,9 +55,9 @@ def evaluate_summarizer(dataset: Dataset) -> Dataset:
 
     # (tqdm library for progress bar) 
     for sample in tqdm(dataset):
-        text = sample["review"] # TODO: changed from 'text' to 'review', it worked
-
-        text = re.sub(r'-{4,}', '\n', text) # replace long dashes with new line
+        text = sample["text"] 
+        
+        text = text.replace('-----', '\n') # TODO: check for multiple "-" in the text instead of just 5
         sentences = nltk.sent_tokenize(text)
         # remove empty sentences
         sentences = [sentence for sentence in sentences if sentence != ""]
