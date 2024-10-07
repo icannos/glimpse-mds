@@ -64,15 +64,10 @@ def parse_args():
 
 
 def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
-    dataset_path = Path(dataset_path)
-    if dataset_name == "amazon":
-        dataset = pd.read_csv(dataset_path / "amazon_test.csv")
-    elif dataset_name == "space":
-        dataset = pd.read_csv(dataset_path / "space.csv")
-    elif dataset_name == "yelp":
-        dataset = pd.read_csv(dataset_path / "yelp_test.csv")
-    elif dataset_name == "reviews":
-        dataset = pd.read_csv(dataset_path / "test_metareviews.csv")
+    if dataset_path is not None:
+        dataset_path = Path(dataset_path)   
+    if dataset_name in range (2017,2021):
+        dataset = pd.read_csv(dataset_path / f"all_reviews_{dataset_name}.csv")
     else:
         raise ValueError(f"Unknown dataset {dataset_name}")
 
