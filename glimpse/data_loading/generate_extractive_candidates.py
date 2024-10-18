@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("--dataset_path", type=str, default="data/processed")
 
 
-    parser.add_argument("--output_dir", type=str, default="output")
+    parser.add_argument("--output_dir", type=str, default="summaries")
 
     # limit the number of samples to generate
     parser.add_argument("--limit", type=int, default=None)
