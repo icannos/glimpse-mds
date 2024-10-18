@@ -12,13 +12,13 @@ from rsasumm.rsa_reranker import RSAReranking
 
 
 DESC = """
-Compute the RSA matrices for all the set of multi-document samples and dump these along with additinoal information in a pickle file.
+Compute the RSA matrices for all the set of multi-document samples and dump these along with additional information in a pickle file.
 """
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--summaries", type=Path, default="")
+    parser.add_argument("--summaries", type=Path, default="summaries/Test.csv")
     parser.add_argument("--output_dir", type=str, default="output")
 
     parser.add_argument("--filter", type=str, default=None)
@@ -33,10 +33,10 @@ def parse_summaries(path: Path) -> pd.DataFrame:
 
     # check if the dataframe has the right columns
     if not all(
-        col in summaries.columns for col in ["id", "id_text", "id_candidate", "summary"]
+        col in summaries.columns for col in ["index", "id", "text", "gold", "summary", "id_candidate"]
     ):
         raise ValueError(
-            "The dataframe must have columns ['id', 'id_text', 'id_candidate', 'summary']"
+            "The dataframe must have columns ['index', 'id', 'text', 'gold', 'summary', 'id_candidate']"
         )
 
     return summaries
