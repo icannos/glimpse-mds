@@ -46,8 +46,8 @@ for key, value in GENERATION_CONFIGS.items():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--dataset_name", type=str, default="amazon")
-    parser.add_argument("--dataset_path", type=str, default=None)
+    parser.add_argument("--dataset_name", type=int, default=2017)
+    parser.add_argument("--dataset_path", type=str, default="data/processed")
     parser.add_argument("--decoding_config", type=str, default="top_p_sampling", choices=GENERATION_CONFIGS.keys())
 
     parser.add_argument("--batch_size", type=int, default=16)
