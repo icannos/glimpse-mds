@@ -8,7 +8,8 @@ from tqdm import tqdm
 
 import nltk
 import re
-
+import os
+os
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -16,7 +17,7 @@ def parse_args():
     parser.add_argument("--dataset_path", type=str, default="data/processed")
 
 
-    parser.add_argument("--output_dir", type=str, default="summaries")
+    parser.add_argument("--output_dir", type=str, default="data/candidates")
 
     # limit the number of samples to generate
     parser.add_argument("--limit", type=int, default=None)

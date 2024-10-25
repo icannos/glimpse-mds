@@ -4,7 +4,12 @@ This is the repositotry of  GLIMPSE: Pragmatically Informative Multi-Document Su
 
 
 ### Installation
+
 - We use python 3.10 and CUDA 12.1
+``` bash
+module load miniconda/3
+module load cuda12
+```
 - First, create a virtual environment using:
 ``` bash
 conda create -n glimpse python=3.10
@@ -14,12 +19,38 @@ conda create -n glimpse python=3.10
 ``` bash
 conda install pytorch==2.1.1 pytorch-cuda=12.1 -c pytorch -c nvidia
 ```
+- To activate the environment:
+``` bash
+conda activate glimpse 
+```
 - Finally, all remaining required packages could be installed with the requirements file:
 
 ``` bash
 pip install -r requirements
 ```
+### Data Loading
 
+Step 1: First start by processing the input files from data.
+
+``` bash
+python glimpse/data_loading/data_processing.py 
+```
+
+Step 2: In this step, we generate candidate summaries.
+- for extractive candidates, use the following command:
+``` bash
+python glimpse/data_loading/generate_extractive_candidates.py 
+```
+- for abstractive candidates, use the following command:
+``` bash
+python glimpse/data_loading/generate_abstractive_candidates.py 
+```
+
+### RSA Computing
+To compute the rsa score for each candidate summary generated in step 2:
+``` bash
+python python glimpse/src/compute_rsa.py --summaries data/candidates/[Name_Of_Your_File_Step2].csv
+```
 
 `rsasumm/` provides a python package with an implementation of RSA incremental decoding and RSA reranking of candidates.
 `mds/` provides the experiment scripts and analysis for the MultiDocument Summarization task.

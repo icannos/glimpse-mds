@@ -53,7 +53,7 @@ def parse_args():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--device", type=str, default="cuda")
 
-    parser.add_argument("--output_dir", type=str, default="output")
+    parser.add_argument("--output_dir", type=str, default="data/candidates")
 
     # limit the number of samples to generate
     parser.add_argument("--limit", type=int, default=None)
