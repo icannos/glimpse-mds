@@ -84,7 +84,7 @@ def evaluate_summarizer(
     @param model: The model used to generate the summaries
     @param tokenizer: The tokenizer used to tokenize the text and the summary
     @param dataset: A dataset with the text
-    @param decoding_config: Dictoionary with the decoding config
+    @param decoding_config: Dictionary with the decoding config
     @param batch_size: The batch size used to generate the summaries
     @return: The same dataset with the summaries added
     """
@@ -99,7 +99,6 @@ def evaluate_summarizer(
 
     for batch in tqdm(dataloader):
         text = batch["text"]
-
 
         inputs = tokenizer(
             text,
@@ -117,9 +116,34 @@ def evaluate_summarizer(
             **inputs,
             **decoding_config,
         )
-        # output : (batch_size * num_return_sequences, max_length)
-        outputs = outputs.reshape(batch_size, -1, outputs.shape[-1])
 
+        # Debugging the reshaping TODO: Remove print statements
+        #print(f"Original shape: {outputs.shape}")
+        #print(f"Batch size: {batch_size}, Last dimension: {outputs.shape[-1]}")
+        
+        total_size = outputs.numel()  # Total number of elements in the tensor
+        target_size = batch_size * outputs.shape[-1]  # Target size of the last dimension
+        pad_size = (target_size - (total_size % target_size)) % target_size  # Calculate the required padding size to make the total number of elements divisible by the target size
+        #print(f"Total size: {total_size}, Target size: {target_size}, Pad size: {pad_size}")
+
+        # Pad the tensor with zeros to make the total number of elements divisible by the target size
+        if pad_size != 0:
+            #print(f"Padding tensor with {pad_size} elements")
+            outputs = torch.nn.functional.pad(outputs, (0, 0, 0, pad_size // outputs.shape[-1]))
+            #print(f"New shape: {outputs.shape}")
+
+        # Recalculate total_size after padding
+        total_size = outputs.numel()
+
+        # output : (batch_size * num_return_sequences, max_length)
+        try:
+            outputs = outputs.reshape(batch_size, -1, outputs.shape[-1])
+            #print(f"Shape after reshaping: {outputs.shape}")
+        except Exception as e:
+            print(f"Error reshaping outputs: {e}")
+            raise ValueError(f"Cannot reshape tensor of size {total_size} into shape "
+                            f"({batch_size}, -1, {outputs.shape[-1]}).")
+        
         # decode summaries
         for b in range(batch_size):
             summaries.append(

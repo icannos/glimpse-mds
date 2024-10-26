@@ -2,9 +2,12 @@
 ### Python template
 
 # GLIMPSE
-data/processed/
+#  Ignore all the data except orignial files
+data/*
+!data/
 summaries/
 output/
+slurm*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -194,3 +197,4 @@ share/man/man1/ttx.1
 
 # IDEs
 .idea/
+.vscode/
