@@ -30,10 +30,13 @@ def parse_args():
 def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
     if dataset_path is not None:
         dataset_path = Path(dataset_path)   
-    if dataset_name in range (2017,2021):
-        dataset = pd.read_csv(dataset_path / f"all_reviews_{dataset_name}.csv")
-    else:
-        raise ValueError(f"Unknown dataset {dataset_name}")
+    try:
+        # Check if the dataset is a year --> all_reviews_{year}.csv
+        # If not, it should be a csv file with the name of the dataset
+        dataset = pd.read_csv(dataset_path / (f"all_reviews_{dataset_name}.csv" if int(dataset_name) in range (2017, 2021)
+                                              else f"{dataset_name}.csv"))
+    except:
+            raise ValueError(f"Unknown dataset {dataset_name}")
 
     # make a dataset from the dataframe
     dataset = Dataset.from_pandas(dataset)
