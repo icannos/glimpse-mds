@@ -46,12 +46,14 @@ for key, value in GENERATION_CONFIGS.items():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--dataset_name", type=int, default=2017)
+    parser.add_argument("--dataset_name", type=str, default="2017")
     parser.add_argument("--dataset_path", type=str, default="data/processed")
     parser.add_argument("--decoding_config", type=str, default="top_p_sampling", choices=GENERATION_CONFIGS.keys())
 
     parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--use_padding", type=bool, default=True)
     parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--debug", type=bool, default=False)
 
     parser.add_argument("--output_dir", type=str, default="data/candidates")
 
@@ -66,10 +68,13 @@ def parse_args():
 def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
     if dataset_path is not None:
         dataset_path = Path(dataset_path)   
-    if dataset_name in range (2017,2021):
-        dataset = pd.read_csv(dataset_path / f"all_reviews_{dataset_name}.csv")
-    else:
-        raise ValueError(f"Unknown dataset {dataset_name}")
+    try:
+        # Check if the dataset is a year --> all_reviews_{year}.csv
+        # If not, it should be a csv file with the name of the dataset
+        dataset = pd.read_csv(dataset_path / (f"all_reviews_{dataset_name}.csv" if int(dataset_name) in range (2017, 2021)
+                                              else f"{dataset_name}.csv"))
+    except:
+            raise ValueError(f"Unknown dataset {dataset_name}")
 
     # make a dataset from the dataframe
     dataset = Dataset.from_pandas(dataset)
@@ -78,7 +83,8 @@ def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
 
 
 def evaluate_summarizer(
-    model, tokenizer, dataset: Dataset, decoding_config, batch_size: int
+    model, tokenizer, dataset: Dataset, decoding_config, batch_size: int,
+    device: str, use_padding: bool, debug=False
 ) -> Dataset:
     """
     @param model: The model used to generate the summaries
@@ -91,7 +97,8 @@ def evaluate_summarizer(
     # create a dataset with the text and the summary
 
     # create a dataloader
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=not use_padding)
+    # drop_last=True to avoid errors when reshaping the tensor, if not using padding
 
     # generate summaries
     summaries = []
@@ -109,7 +116,7 @@ def evaluate_summarizer(
         )
 
         # move inputs to device
-        inputs = {key: value.to("cuda") for key, value in inputs.items()}
+        inputs = {key: value.to(device) for key, value in inputs.items()}
 
         # generate summaries
         outputs = model.generate(
@@ -117,20 +124,22 @@ def evaluate_summarizer(
             **decoding_config,
         )
 
-        # Debugging the reshaping TODO: Remove print statements
-        #print(f"Original shape: {outputs.shape}")
-        #print(f"Batch size: {batch_size}, Last dimension: {outputs.shape[-1]}")
+        # Debugging the reshaping 
+        # TODO: Remove debug print statements
+        if debug:
+            print(f"Original shape: {outputs.shape}")
+            print(f"Batch size: {batch_size}, Last dimension: {outputs.shape[-1]}")
         
         total_size = outputs.numel()  # Total number of elements in the tensor
         target_size = batch_size * outputs.shape[-1]  # Target size of the last dimension
         pad_size = (target_size - (total_size % target_size)) % target_size  # Calculate the required padding size to make the total number of elements divisible by the target size
-        #print(f"Total size: {total_size}, Target size: {target_size}, Pad size: {pad_size}")
+        if debug: print(f"Total size: {total_size}, Target size: {target_size}, Pad size: {pad_size}")
 
         # Pad the tensor with zeros to make the total number of elements divisible by the target size
-        if pad_size != 0:
-            #print(f"Padding tensor with {pad_size} elements")
+        if use_padding and pad_size != 0:
+            if debug: print(f"Padding tensor with {pad_size} elements")
             outputs = torch.nn.functional.pad(outputs, (0, 0, 0, pad_size // outputs.shape[-1]))
-            #print(f"New shape: {outputs.shape}")
+            if debug: print(f"New shape: {outputs.shape}")
 
         # Recalculate total_size after padding
         total_size = outputs.numel()
@@ -138,7 +147,7 @@ def evaluate_summarizer(
         # output : (batch_size * num_return_sequences, max_length)
         try:
             outputs = outputs.reshape(batch_size, -1, outputs.shape[-1])
-            #print(f"Shape after reshaping: {outputs.shape}")
+            if debug: print(f"Shape after reshaping: {outputs.shape}")
         except Exception as e:
             print(f"Error reshaping outputs: {e}")
             raise ValueError(f"Cannot reshape tensor of size {total_size} into shape "
@@ -202,6 +211,9 @@ def main():
         dataset,
         GENERATION_CONFIGS[args.decoding_config],
         args.batch_size,
+        args.device,
+        args.use_padding,
+        args.debug,
     )
 
     df_dataset = dataset.to_pandas()
