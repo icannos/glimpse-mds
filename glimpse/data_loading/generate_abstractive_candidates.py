@@ -51,10 +51,10 @@ def parse_args():
     parser.add_argument("--decoding_config", type=str, default="top_p_sampling", choices=GENERATION_CONFIGS.keys())
 
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--use_padding", type=bool, default=True)
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--debug", type=bool, default=False)
-
+    parser.add_argument("--use_padding", type=lambda x: (str(x).lower() == 'true'), default=False)
+    parser.add_argument("--debug", type=lambda x: (str(x).lower() == 'true'), default=False)
+    
     parser.add_argument("--output_dir", type=str, default="data/candidates")
 
     # limit the number of samples to generate
