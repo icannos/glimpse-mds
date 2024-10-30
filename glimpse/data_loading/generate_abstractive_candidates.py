@@ -227,9 +227,10 @@ def main():
     now = datetime.datetime.now()
     date = now.strftime("%Y-%m-%d-%H-%M-%S")
     model_name = sanitize_model_name(args.model_name)
+    padding_status = "padded" if args.use_padding else "droppedLast"
     output_path = (
         Path(args.output_dir)
-        / f"{model_name}-_-{args.dataset_name}-_-{args.decoding_config}-_-{date}.csv"
+        / f"{model_name}-_-{args.dataset_name}-_-{args.decoding_config}-_-{padding_status}-_-{date}.csv"
     )
 
     # create output dir if it doesn't exist
