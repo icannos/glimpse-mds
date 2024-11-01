@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, PegasusTokenizer
 import argparse
 from tqdm import tqdm
 
@@ -19,8 +19,8 @@ Compute the RSA matrices for all the set of multi-document samples and dump thes
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--summaries", type=Path, default="data/candidates/Test.csv")
+    parser.add_argument("--model_name", type=str, default="google/pegasus-arxiv")
+    parser.add_argument("--summaries", type=Path, default="data/candidates/abstractive_test.csv")
     parser.add_argument("--output_dir", type=str, default="output")
 
     parser.add_argument("--filter", type=str, default=None)
@@ -98,7 +98,10 @@ def main():
 
     # load the model and the tokenizer
     model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    if "pegasus" in args.model_name: 
+        tokenizer = PegasusTokenizer.from_pretrained(args.model_name)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
     model = model.to(args.device)
 

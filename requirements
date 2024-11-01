@@ -6,3 +6,5 @@ gradio
 pandas
 datasets
 nltk
+
+SenSentencePiece
