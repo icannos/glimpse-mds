@@ -1,10 +1,9 @@
 transformers
-numpy
+numpy==1.25.2
 seaborn
 matplotlib
 gradio
 pandas
 datasets
 nltk
-
-SenSentencePiece
+SentencePiece
