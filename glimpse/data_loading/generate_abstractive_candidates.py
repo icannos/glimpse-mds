@@ -46,7 +46,7 @@ for key, value in GENERATION_CONFIGS.items():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--dataset_name", type=str, default="2017")
+    parser.add_argument("--dataset_name", type=str, default="all_reviews_2017")
     parser.add_argument("--dataset_path", type=str, default="data/processed")
     parser.add_argument("--decoding_config", type=str, default="top_p_sampling", choices=GENERATION_CONFIGS.keys())
 
@@ -69,12 +69,9 @@ def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
     if dataset_path is not None:
         dataset_path = Path(dataset_path)   
     try:
-        # Check if the dataset is a year --> all_reviews_{year}.csv
-        # If not, it should be a csv file with the name of the dataset
-        dataset = pd.read_csv(dataset_path / (f"all_reviews_{dataset_name}.csv" if int(dataset_name) in range (2017, 2021)
-                                              else f"{dataset_name}.csv"))
+        dataset = pd.read_csv(dataset_path / (f"{dataset_name}.csv"))
     except:
-            raise ValueError(f"Unknown dataset {dataset_name}")
+        raise ValueError(f"Unknown dataset {dataset_name}")
 
     # make a dataset from the dataframe
     dataset = Dataset.from_pandas(dataset)
@@ -166,8 +163,9 @@ def evaluate_summarizer(
             )
 
     # add summaries to the huggingface dataset
+    dataset = dataset.select(range(len(summaries)))
     dataset = dataset.map(lambda example: {"summary": summaries.pop(0)})
-
+    
     return dataset
 
 
@@ -188,7 +186,7 @@ def main():
         args.model_name
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-
+    
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token_id = tokenizer.unk_token_id
 

@@ -13,7 +13,7 @@ os
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_name", type=int, default=2017)
+    parser.add_argument("--dataset_name", type=str, default="all_reviews_2017")
     parser.add_argument("--dataset_path", type=str, default="data/processed")
 
 
@@ -31,12 +31,9 @@ def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
     if dataset_path is not None:
         dataset_path = Path(dataset_path)   
     try:
-        # Check if the dataset is a year --> all_reviews_{year}.csv
-        # If not, it should be a csv file with the name of the dataset
-        dataset = pd.read_csv(dataset_path / (f"all_reviews_{dataset_name}.csv" if int(dataset_name) in range (2017, 2021)
-                                              else f"{dataset_name}.csv"))
+        dataset = pd.read_csv(dataset_path / (f"{dataset_name}.csv"))
     except:
-            raise ValueError(f"Unknown dataset {dataset_name}")
+        raise ValueError(f"Unknown dataset {dataset_name}")
 
     # make a dataset from the dataframe
     dataset = Dataset.from_pandas(dataset)
@@ -61,7 +58,7 @@ def evaluate_summarizer(dataset: Dataset) -> Dataset:
     for sample in tqdm(dataset):
         text = sample["text"] 
         
-        text = text.replace('-----', '\n') # TODO: check for multiple "-" in the text instead of just 5
+        text = text.replace('-----', '\n')
         sentences = nltk.sent_tokenize(text)
         # remove empty sentences
         sentences = [sentence for sentence in sentences if sentence != ""]
