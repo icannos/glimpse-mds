@@ -52,8 +52,7 @@ def parse_args():
 
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--use_padding", type=lambda x: (str(x).lower() == 'true'), default=False)
-    parser.add_argument("--debug", type=lambda x: (str(x).lower() == 'true'), default=False)
+    parser.add_argument("--trimming", action=argparse.BooleanOptionalAction, default=True)
     
     parser.add_argument("--output_dir", type=str, default="data/candidates")
 
@@ -81,7 +80,7 @@ def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
 
 def evaluate_summarizer(
     model, tokenizer, dataset: Dataset, decoding_config, batch_size: int,
-    device: str, use_padding: bool, debug=False
+    device: str, trimming: bool
 ) -> Dataset:
     """
     @param model: The model used to generate the summaries
@@ -94,8 +93,7 @@ def evaluate_summarizer(
     # create a dataset with the text and the summary
 
     # create a dataloader
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=not use_padding)
-    # drop_last=True to avoid errors when reshaping the tensor, if not using padding
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=trimming)
 
     # generate summaries
     summaries = []
@@ -120,34 +118,20 @@ def evaluate_summarizer(
             **inputs,
             **decoding_config,
         )
-
-        # Debugging the reshaping 
-        # TODO: Remove debug print statements
-        if debug:
-            print(f"Original shape: {outputs.shape}")
-            print(f"Batch size: {batch_size}, Last dimension: {outputs.shape[-1]}")
         
         total_size = outputs.numel()  # Total number of elements in the tensor
         target_size = batch_size * outputs.shape[-1]  # Target size of the last dimension
         pad_size = (target_size - (total_size % target_size)) % target_size  # Calculate the required padding size to make the total number of elements divisible by the target size
-        if debug: print(f"Total size: {total_size}, Target size: {target_size}, Pad size: {pad_size}")
 
         # Pad the tensor with zeros to make the total number of elements divisible by the target size
-        if use_padding and pad_size != 0:
-            if debug: print(f"Padding tensor with {pad_size} elements")
-            outputs = torch.nn.functional.pad(outputs, (0, 0, 0, pad_size // outputs.shape[-1]))
-            if debug: print(f"New shape: {outputs.shape}")
-
-        # Recalculate total_size after padding
-        total_size = outputs.numel()
+        if not trimming and pad_size != 0: outputs = torch.nn.functional.pad(outputs, (0, 0, 0, pad_size // outputs.shape[-1]))
 
         # output : (batch_size * num_return_sequences, max_length)
         try:
             outputs = outputs.reshape(batch_size, -1, outputs.shape[-1])
-            if debug: print(f"Shape after reshaping: {outputs.shape}")
         except Exception as e:
             print(f"Error reshaping outputs: {e}")
-            raise ValueError(f"Cannot reshape tensor of size {total_size} into shape "
+            raise ValueError(f"Cannot reshape tensor of size {outputs.numel()} into shape "
                             f"({batch_size}, -1, {outputs.shape[-1]}).")
         
         # decode summaries
@@ -162,8 +146,10 @@ def evaluate_summarizer(
                 ]
             )
 
+    # if trimming the last batch, remove them from the dataset
+    if trimming: dataset = dataset.select(range(len(summaries)))
+    
     # add summaries to the huggingface dataset
-    dataset = dataset.select(range(len(summaries)))
     dataset = dataset.map(lambda example: {"summary": summaries.pop(0)})
     
     return dataset
@@ -210,8 +196,7 @@ def main():
         GENERATION_CONFIGS[args.decoding_config],
         args.batch_size,
         args.device,
-        args.use_padding,
-        args.debug,
+        args.trimming,
     )
 
     df_dataset = dataset.to_pandas()
@@ -225,7 +210,7 @@ def main():
     now = datetime.datetime.now()
     date = now.strftime("%Y-%m-%d-%H-%M-%S")
     model_name = sanitize_model_name(args.model_name)
-    padding_status = "padded" if args.use_padding else "droppedLast"
+    padding_status = "trimmed" if args.trimming else "padded"
     output_path = (
         Path(args.output_dir)
         / f"{model_name}-_-{args.dataset_name}-_-{args.decoding_config}-_-{padding_status}-_-{date}.csv"
