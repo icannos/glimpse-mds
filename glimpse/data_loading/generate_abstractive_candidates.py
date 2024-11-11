@@ -46,12 +46,14 @@ for key, value in GENERATION_CONFIGS.items():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--dataset_name", type=str, default="2017")
+    parser.add_argument("--dataset_name", type=str, default="all_reviews_2017")
     parser.add_argument("--dataset_path", type=str, default="data/processed")
     parser.add_argument("--decoding_config", type=str, default="top_p_sampling", choices=GENERATION_CONFIGS.keys())
 
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--device", type=str, default="cuda")
+    parser.add_argument("--trimming", action=argparse.BooleanOptionalAction, default=True)
+    
     parser.add_argument("--output_dir", type=str, default="data/candidates")
 
     # limit the number of samples to generate
@@ -66,13 +68,10 @@ def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
     if dataset_path is not None:
         dataset_path = Path(dataset_path)   
     try:
-        # Check if the dataset is a year --> all_reviews_{year}.csv
-        # If not, it should be a csv file with the name of the dataset
-        dataset = pd.read_csv(dataset_path / (f"all_reviews_{dataset_name}.csv" if int(dataset_name) in range (2017, 2021)
-                                              else f"{dataset_name}.csv"))
+        dataset = pd.read_csv(dataset_path / (f"{dataset_name}.csv"))
     except:
-            raise ValueError(f"Unknown dataset {dataset_name}")
-    print(dataset.head())
+        raise ValueError(f"Unknown dataset {dataset_name}")
+
     # make a dataset from the dataframe
     dataset = Dataset.from_pandas(dataset)
 
@@ -81,7 +80,7 @@ def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
 
 def evaluate_summarizer(
     model, tokenizer, dataset: Dataset, decoding_config, batch_size: int,
-    device: str
+    device: str, trimming: bool
 ) -> Dataset:
     """
     @param model: The model used to generate the summaries
@@ -94,8 +93,7 @@ def evaluate_summarizer(
     # create a dataset with the text and the summary
 
     # create a dataloader
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=True)
-    # drop_last=True to avoid errors when reshaping the tensor, if not using padding
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=trimming)
 
     # generate summaries
     summaries = []
@@ -125,14 +123,16 @@ def evaluate_summarizer(
         target_size = batch_size * outputs.shape[-1]  # Target size of the last dimension
         pad_size = (target_size - (total_size % target_size)) % target_size  # Calculate the required padding size to make the total number of elements divisible by the target size
 
-        # Recalculate total_size after padding
-        total_size = outputs.numel()
+        # Pad the tensor with zeros to make the total number of elements divisible by the target size
+        if not trimming and pad_size != 0: outputs = torch.nn.functional.pad(outputs, (0, 0, 0, pad_size // outputs.shape[-1]))
 
         # output : (batch_size * num_return_sequences, max_length)
         try:
             outputs = outputs.reshape(batch_size, -1, outputs.shape[-1])
-        except:
-            print(outputs.shape[0])
+        except Exception as e:
+            print(f"Error reshaping outputs: {e}")
+            raise ValueError(f"Cannot reshape tensor of size {outputs.numel()} into shape "
+                            f"({batch_size}, -1, {outputs.shape[-1]}).")
         
         # decode summaries
         for b in range(batch_size):
@@ -146,9 +146,12 @@ def evaluate_summarizer(
                 ]
             )
 
+    # if trimming the last batch, remove them from the dataset
+    if trimming: dataset = dataset.select(range(len(summaries)))
+    
     # add summaries to the huggingface dataset
     dataset = dataset.map(lambda example: {"summary": summaries.pop(0)})
-
+    
     return dataset
 
 
@@ -169,7 +172,7 @@ def main():
         args.model_name
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-
+    
     tokenizer.pad_token = tokenizer.unk_token
     tokenizer.pad_token_id = tokenizer.unk_token_id
 
@@ -192,7 +195,8 @@ def main():
         dataset,
         GENERATION_CONFIGS[args.decoding_config],
         args.batch_size,
-        args.device
+        args.device,
+        args.trimming,
     )
 
     df_dataset = dataset.to_pandas()
@@ -206,10 +210,10 @@ def main():
     now = datetime.datetime.now()
     date = now.strftime("%Y-%m-%d-%H-%M-%S")
     model_name = sanitize_model_name(args.model_name)
-
+    padding_status = "trimmed" if args.trimming else "padded"
     output_path = (
         Path(args.output_dir)
-        / f"{model_name}-_-{args.dataset_name}-_-{args.decoding_config}-_-{date}.csv"
+        / f"{model_name}-_-{args.dataset_name}-_-{args.decoding_config}-_-{padding_status}-_-{date}.csv"
     )
 
     # create output dir if it doesn't exist

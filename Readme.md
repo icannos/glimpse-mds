@@ -14,15 +14,14 @@ module load cuda12
 ``` bash
 conda create -n glimpse python=3.10
 ```
-
-- Second, install pytorch via the following command:
-``` bash
-conda install pytorch==2.1.1 pytorch-cuda=12.1 -c pytorch -c nvidia
-```
-- To activate the environment:
+- Second, activate the environment and install pytorch:
 ``` bash
 conda activate glimpse 
 ```
+``` bash
+conda install pytorch==2.1.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+```
+
 - Finally, all remaining required packages could be installed with the requirements file:
 
 ``` bash
@@ -39,17 +38,17 @@ python glimpse/data_loading/data_processing.py
 Step 2: In this step, we generate candidate summaries.
 - for extractive candidates, use the following command:
 ``` bash
-python glimpse/data_loading/generate_extractive_candidates.py 
+python glimpse/data_loading/generate_extractive_candidates.py --dataset_name [Name_of_Your_Processed_Dataset_Step1].csv 
 ```
 - for abstractive candidates, use the following command:
 ``` bash
-python glimpse/data_loading/generate_abstractive_candidates.py 
+python glimpse/data_loading/generate_abstractive_candidates.py --dataset_name [Name_of_Your_Processed_Dataset_Step1].csv 
 ```
 
 ### RSA Computing
 To compute the rsa score for each candidate summary generated in step 2:
 ``` bash
-python python glimpse/src/compute_rsa.py --summaries data/candidates/[Name_Of_Your_File_Step2].csv
+python python glimpse/src/compute_rsa.py --summaries data/candidates/[Name_of_Your_Candidate_File_Step2].csv
 ```
 
 `rsasumm/` provides a python package with an implementation of RSA incremental decoding and RSA reranking of candidates.

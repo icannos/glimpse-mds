@@ -1,8 +1,13 @@
 transformers
+<<<<<<< HEAD
 numpy==1.26.4
+=======
+numpy==1.25.2
+>>>>>>> fee7c935947a275ebb404b2d21eb7b34f6125d44
 seaborn
 matplotlib
 gradio
 pandas
 datasets
 nltk
+SentencePiece
