@@ -46,8 +46,7 @@ for key, value in GENERATION_CONFIGS.items():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
-    parser.add_argument("--dataset_name", type=str, default="all_reviews_2017")
-    parser.add_argument("--dataset_path", type=str, default="data/processed")
+    parser.add_argument("--dataset_path", type=Path, default="data/processed/all_reviews_2017.csv")
     parser.add_argument("--decoding_config", type=str, default="top_p_sampling", choices=GENERATION_CONFIGS.keys())
 
     parser.add_argument("--batch_size", type=int, default=16)
@@ -56,6 +55,9 @@ def parse_args():
     
     parser.add_argument("--output_dir", type=str, default="data/candidates")
 
+    # if ran in a scripted way, the output path will be printed
+    parser.add_argument("--scripted-run", action=argparse.BooleanOptionalAction, default=False)
+    
     # limit the number of samples to generate
     parser.add_argument("--limit", type=int, default=None)
 
@@ -64,13 +66,11 @@ def parse_args():
     return args
 
 
-def prepare_dataset(dataset_name, dataset_path=None) -> Dataset:
-    if dataset_path is not None:
-        dataset_path = Path(dataset_path)   
+def prepare_dataset(dataset_path) -> Dataset:
     try:
-        dataset = pd.read_csv(dataset_path / (f"{dataset_name}.csv"))
+        dataset = pd.read_csv(dataset_path)
     except:
-        raise ValueError(f"Unknown dataset {dataset_name}")
+        raise ValueError(f"Unknown dataset {dataset_path}")
 
     # make a dataset from the dataframe
     dataset = Dataset.from_pandas(dataset)
@@ -181,7 +181,7 @@ def main():
 
     # load the dataset
     print("Loading dataset...")
-    dataset = prepare_dataset(args.dataset_name, args.dataset_path)
+    dataset = prepare_dataset(args.dataset_path)
 
     # limit the number of samples
     if args.limit is not None:
@@ -213,7 +213,7 @@ def main():
     padding_status = "trimmed" if args.trimming else "padded"
     output_path = (
         Path(args.output_dir)
-        / f"{model_name}-_-{args.dataset_name}-_-{args.decoding_config}-_-{padding_status}-_-{date}.csv"
+        / f"{model_name}-_-{args.dataset_path.stem}-_-{args.decoding_config}-_-{padding_status}-_-{date}.csv"
     )
 
     # create output dir if it doesn't exist
@@ -221,6 +221,9 @@ def main():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
     df_dataset.to_csv(output_path, index=False, encoding="utf-8")
+
+    # in case of scripted run, print the output path
+    if args.scripted_run: print(output_path)
 
 
 if __name__ == "__main__":

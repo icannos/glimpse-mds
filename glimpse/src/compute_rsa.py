@@ -24,6 +24,9 @@ def parse_args():
     parser.add_argument("--output_dir", type=str, default="output")
 
     parser.add_argument("--filter", type=str, default=None)
+    
+    # if ran in a scripted way, the output path will be printed
+    parser.add_argument("--scripted-run", action=argparse.BooleanOptionalAction, default=False)
 
     parser.add_argument("--device", type=str, default="cuda")
 
@@ -31,7 +34,11 @@ def parse_args():
 
 
 def parse_summaries(path: Path) -> pd.DataFrame:
-    summaries = pd.read_csv(path)
+    
+    try:
+        summaries = pd.read_csv(path)
+    except:
+        raise ValueError(f"Unknown dataset {path}")
 
     # check if the dataframe has the right columns
     if not all(
@@ -128,6 +135,9 @@ def main():
 
     with open(output_path, "wb") as f:
         dump(results, f)
+        
+    # in case of scripted run, print the output path
+    if args.scripted_run: print(output_path)
 
 
 if __name__ == "__main__":
