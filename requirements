@@ -1,5 +1,5 @@
 transformers
-numpy==1.26.4
+numpy==1.25.2
 seaborn
 matplotlib
 gradio

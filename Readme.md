@@ -17,8 +17,6 @@ conda create -n glimpse python=3.10
 - Second, activate the environment and install pytorch:
 ``` bash
 conda activate glimpse 
-```
-``` bash
 conda install pytorch==2.1.1 pytorch-cuda=12.1 -c pytorch -c nvidia
 ```
 
@@ -29,32 +27,27 @@ pip install -r requirements
 ```
 ### Data Loading
 
-Step 1: First start by processing the input files from data.
+Step 1: Start by processing the input files from data.
 
 ``` bash
 python glimpse/data_loading/data_processing.py 
 ```
 
-Step 2: In this step, we generate candidate summaries.
+### Generating Summaries and Computing RSA Scores
+Step 2: Now, we generate candidate summaries and compute RSA scores for each candidate
 - for extractive candidates, use the following command:
 ``` bash
 sbatch scripts/extractive.sh Path_of_Your_Processed_Dataset_Step1.csv
 ```
-- for abstractive candidates, use the following command:
-  - In case the last batch is incomplete, you can add padding to complete it:
+- for abstractive candidates, use either of the following commands:
+  - In case the last batch is incomplete, you can add padding using `--add-padding` argument to complete it:
   ``` bash
   sbatch scripts/abstractive.sh Path_of_Your_Processed_Dataset_Step1.csv --add-padding
   ```
-  - In case you want to remove the last incomplete batch, you can run without the argument:
+  - If you want to remove the last incomplete batch, you can run the script without the argument:
   ``` bash
   sbatch scripts/abstractive.sh Path_of_Your_Processed_Dataset_Step1.csv
   ```
-
-### RSA Computing
-To compute the rsa score for each candidate summary generated in step 2:
-``` bash
-python python glimpse/src/compute_rsa.py --summaries data/candidates/[Name_of_Your_Candidate_File_Step2].csv
-```
 
 `rsasumm/` provides a python package with an implementation of RSA incremental decoding and RSA reranking of candidates.
 `mds/` provides the experiment scripts and analysis for the MultiDocument Summarization task.
