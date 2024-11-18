@@ -38,12 +38,17 @@ python glimpse/data_loading/data_processing.py
 Step 2: In this step, we generate candidate summaries.
 - for extractive candidates, use the following command:
 ``` bash
-python glimpse/data_loading/generate_extractive_candidates.py --dataset_name [Name_of_Your_Processed_Dataset_Step1].csv 
+sbatch scripts/extractive.sh Path_of_Your_Processed_Dataset_Step1.csv
 ```
 - for abstractive candidates, use the following command:
-``` bash
-python glimpse/data_loading/generate_abstractive_candidates.py --dataset_name [Name_of_Your_Processed_Dataset_Step1].csv 
-```
+  - In case the last batch is incomplete, you can add padding to complete it:
+  ``` bash
+  sbatch scripts/abstractive.sh Path_of_Your_Processed_Dataset_Step1.csv --add-padding
+  ```
+  - In case you want to remove the last incomplete batch, you can run without the argument:
+  ``` bash
+  sbatch scripts/abstractive.sh Path_of_Your_Processed_Dataset_Step1.csv
+  ```
 
 ### RSA Computing
 To compute the rsa score for each candidate summary generated in step 2:
