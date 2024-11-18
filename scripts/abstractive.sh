@@ -22,17 +22,16 @@ else
     dataset_path="$1"
 fi
 
-output_file="" # will contain the path to the file generated in each step
 
 # Generate abstractive summaries
 if [[ "$@" =~ "--add-padding" ]]; then # check if padding argument is present
     # add '--no-trimming' flag to the script
-    output_file=$(python glimpse/data_loading/generate_abstractive_candidates.py  --dataset_path "$dataset_path" --scripted-run --no-trimming | tail -n 1)
+    candidates=$(python glimpse/data_loading/generate_abstractive_candidates.py  --dataset_path "$dataset_path" --scripted-run --no-trimming | tail -n 1)
 else
     # no additional flags
-    output_file=$(python glimpse/data_loading/generate_abstractive_candidates.py --dataset_path "$dataset_path" --scripted-run | tail -n 1)
+    candidates=$(python glimpse/data_loading/generate_abstractive_candidates.py --dataset_path "$dataset_path" --scripted-run | tail -n 1)
 fi
 
 
 # Compute the RSA scores based on the generated summaries
-output_file=$(python glimpse/src/compute_rsa.py --summaries $output_file | tail -n 1)
+rsa_scores=$(python glimpse/src/compute_rsa.py --summaries $candidates | tail -n 1)
