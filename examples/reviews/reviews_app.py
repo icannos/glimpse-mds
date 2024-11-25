@@ -5,6 +5,9 @@ import nltk
 import numpy as np
 import seaborn as sns
 
+import sys, os.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from rsasumm.rsa_reranker import RSAReranking
 import gradio as gr
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -268,4 +271,4 @@ iface = gr.Interface(
     description="Summarize 3 texts using RSA",
 )
 
-iface.launch()
+iface.launch(share=True)

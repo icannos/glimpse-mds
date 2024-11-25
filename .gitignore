@@ -9,6 +9,7 @@ summaries/
 output/
 slurm*
 !scripts/
+.gradio/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
