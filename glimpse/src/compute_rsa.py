@@ -79,16 +79,16 @@ def compute_rsa(summaries: pd.DataFrame, model, tokenizer, device):
         results.append(
             {
                 "id": name,
-                "best_rsa": best_rsa,
-                "best_base": best_base,
-                "speaker_df": speaker_df,
-                "listener_df": listener_df,
+                "best_rsa": best_rsa,  # best speaker score
+                "best_base": best_base,  # naive baseline
+                "speaker_df": speaker_df,  # all speaker results
+                "listener_df": listener_df,  # all listener results (chances of guessing correctly)
                 "initial_listener": initial_listener,
                 "language_model_proba_df": language_model_proba_df,
                 "initial_consensuality_scores": initial_consensuality_scores,
-                "consensuality_scores": consensuality_scores,
+                "consensuality_scores": consensuality_scores,  # uniqueness scores
                 "gold": gold,
-                "rationality": 3,
+                "rationality": 3,  # hyperparameter
                 "text_candidates" : group
             }
         )
@@ -118,9 +118,6 @@ def main():
     # rerank the summaries
     results = compute_rsa(summaries, model, tokenizer, args.device)
     results = {"results": results}
-
-    results["metadata/reranking_model"] = args.model_name
-    results["metadata/rsa_iterations"] = 3
 
     results["metadata/reranking_model"] = args.model_name
     results["metadata/rsa_iterations"] = 3
