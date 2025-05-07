@@ -7,7 +7,25 @@ from datasets import Dataset
 from tqdm import tqdm
 
 import nltk
-import os
+
+import sys, os.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+from glimpse.data_loading.Glimpse_tokenizer import glimpse_tokenizer
+
+# def tokenize_sentences(text: str) -> list:
+#     """
+#     Tokenizes the input text into sentences.
+    
+#     @param text: The input text to be tokenized
+#     @return: A list of tokenized sentences
+#     """
+#     text = text.replace('-----', '\n')
+#     sentences = nltk.sent_tokenize(text)
+#     # remove empty sentences
+#     sentences = [sentence for sentence in sentences if sentence != ""]
+    
+#     return sentences
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -56,10 +74,7 @@ def evaluate_summarizer(dataset: Dataset) -> Dataset:
     for sample in tqdm(dataset):
         text = sample["text"] 
         
-        text = text.replace('-----', '\n')
-        sentences = nltk.sent_tokenize(text)
-        # remove empty sentences
-        sentences = [sentence for sentence in sentences if sentence != ""]
+        sentences = glimpse_tokenizer(text)
 
         summaries.append(sentences)
 

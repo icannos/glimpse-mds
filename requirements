@@ -7,3 +7,4 @@ pandas
 datasets
 nltk
 SentencePiece
+spacy
