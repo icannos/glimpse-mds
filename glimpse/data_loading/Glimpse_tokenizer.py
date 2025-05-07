@@ -1,6 +1,7 @@
 import re
 import spacy
 import importlib
+import nltk
 
 try:
     importlib.util.find_spec("en_core_web_sm")
@@ -38,4 +39,23 @@ def glimpse_tokenizer(text: str) -> list:
         doc = nlp(chunk)
         sentences.extend([sent.text.strip() for sent in doc.sents if sent.text.strip()])
 
+    return sentences
+    
+# reuse the original glimpse tokenizer
+# def glimpse_tokenizer(text: str) -> list:    
+#     return tokenize_sentences(text)
+
+# Default glimpse tokenizer from the original code
+def tokenize_sentences(text: str) -> list:
+    """
+    Tokenizes the input text into sentences.
+    
+    @param text: The input text to be tokenized
+    @return: A list of tokenized sentences
+    """
+    text = text.replace('-----', '\n')
+    sentences = nltk.sent_tokenize(text)
+    # remove empty sentences
+    sentences = [sentence for sentence in sentences if sentence != ""]
+    
     return sentences
