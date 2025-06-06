@@ -20,8 +20,8 @@ Compute the RSA matrices for all the set of multi-document samples and dump thes
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="google/pegasus-arxiv")
-    parser.add_argument("--summaries", type=Path, default="")
-    parser.add_argument("--output_dir", type=str, default="output")
+    parser.add_argument("--summaries", type=Path, default="glimpse/data/candidates/extractive_sentences-_-all_reviews_2017-_-none-_-2025-05-20-20-22-18.csv")
+    parser.add_argument("--output_dir", type=str, default="glimpse/output")
 
     parser.add_argument("--filter", type=str, default=None)
     

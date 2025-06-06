@@ -30,8 +30,8 @@ from glimpse.data_loading.Glimpse_tokenizer import glimpse_tokenizer
 def parse_args():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--dataset_path", type=Path, default="data/processed/all_reviews_2017.csv")
-    parser.add_argument("--output_dir", type=str, default="data/candidates")
+    parser.add_argument("--dataset_path", type=Path, default="glimpse/data/processed/all_reviews_2017.csv")
+    parser.add_argument("--output_dir", type=str, default="glimpse/data/candidates")
     
     # if ran in a scripted way, the output path will be printed
     parser.add_argument("--scripted-run", action=argparse.BooleanOptionalAction, default=False)
