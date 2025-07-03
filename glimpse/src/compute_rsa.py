@@ -19,7 +19,7 @@ Compute the RSA matrices for all the set of multi-document samples and dump thes
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="google/pegasus-arxiv")
+    parser.add_argument("--model_name", type=str, default="facebook/bart-large-cnn")
     parser.add_argument("--summaries", type=Path, default="glimpse/data/candidates/extractive_sentences-_-all_reviews_2017-_-none-_-2025-05-20-20-22-18.csv")
     parser.add_argument("--output_dir", type=str, default="glimpse/output")
 
@@ -60,8 +60,7 @@ def compute_rsa(summaries: pd.DataFrame, model, tokenizer, device):
             device=device,
             candidates=group.summary.unique().tolist(),
             source_texts=group.text.unique().tolist(),
-            batch_size=32,
-            rationality=3,
+            rationality=1,
         )
         (
             best_rsa,
@@ -72,7 +71,7 @@ def compute_rsa(summaries: pd.DataFrame, model, tokenizer, device):
             language_model_proba_df,
             initial_consensuality_scores,
             consensuality_scores,
-        ) = rsa_reranker.rerank(t=2)
+        ) = rsa_reranker.rerank(t=1)
 
         gold = group['gold'].tolist()[0]
 
@@ -86,9 +85,12 @@ def compute_rsa(summaries: pd.DataFrame, model, tokenizer, device):
                 "initial_listener": initial_listener,
                 "language_model_proba_df": language_model_proba_df,
                 "initial_consensuality_scores": initial_consensuality_scores,
-                "consensuality_scores": consensuality_scores,  # uniqueness scores
+                "consensuality_scores": (
+                    (consensuality_scores - (consensuality_scores.max() - consensuality_scores.min()) / 2)
+                    / (consensuality_scores.max() - consensuality_scores.min()) / 2
+                ),  # consensuality scores
                 "gold": gold,
-                "rationality": 3,  # hyperparameter
+                "rationality": 1,  # hyperparameter
                 "text_candidates" : group
             }
         )
@@ -105,10 +107,7 @@ def main():
 
     # load the model and the tokenizer
     model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name)
-    if "pegasus" in args.model_name: 
-        tokenizer = PegasusTokenizer.from_pretrained(args.model_name)
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
     model = model.to(args.device)
 
@@ -120,7 +119,7 @@ def main():
     results = {"results": results}
 
     results["metadata/reranking_model"] = args.model_name
-    results["metadata/rsa_iterations"] = 3
+    results["metadata/rsa_iterations"] = 1
 
     # save the summaries
     # make the output directory if it does not exist
