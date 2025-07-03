@@ -49,7 +49,9 @@ class RSAReranking:
         """
         self.model = model
         self.device = device
+        self.model = model.to(self.device)
         self.tokenizer = tokenizer
+        
 
         self.candidates = candidates
         self.source_texts = source_texts
@@ -74,20 +76,38 @@ class RSAReranking:
         loss_fn = torch.nn.CrossEntropyLoss(reduction="none")
         batch_size = len(x)
 
-        x = self.tokenizer(x, return_tensors="pt", padding=True, truncation=True)
-        y = self.tokenizer(y, return_tensors="pt", padding=True, truncation=True)
+        x = self.tokenizer(
+            x,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=1024
+        )
+        y = self.tokenizer(
+            y,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=1024
+        )
+
+        # Move all tensors to the correct device
+        x = {k: v.to(self.device) for k, v in x.items()}
+        y = {k: v.to(self.device) for k, v in y.items()}
+
         # Concatenate the two inputs
         # Compute the likelihood of y given x
 
-        x_ids = x.input_ids.to(self.device)
-        y_ids = y.input_ids.to(self.device)
+        x_ids = x["input_ids"]
+        y_ids = y["input_ids"]
 
         logits = self.model(
             input_ids=x_ids,
             decoder_input_ids=y_ids,
-            attention_mask=x.attention_mask.to(self.device),
-            decoder_attention_mask=y.attention_mask.to(self.device),
+            attention_mask=x["attention_mask"],
+            decoder_attention_mask=y["attention_mask"],
         ).logits
+
         # Compute the likelihood of y given x
 
         shifted_logits = logits[..., :-1, :].contiguous()
