@@ -85,10 +85,7 @@ def compute_rsa(summaries: pd.DataFrame, model, tokenizer, device):
                 "initial_listener": initial_listener,
                 "language_model_proba_df": language_model_proba_df,
                 "initial_consensuality_scores": initial_consensuality_scores,
-                "consensuality_scores": (
-                    (consensuality_scores - (consensuality_scores.max() - consensuality_scores.min()) / 2)
-                    / (consensuality_scores.max() - consensuality_scores.min()) / 2
-                ),  # consensuality scores
+                "consensuality_scores": consensuality_scores,  # consensuality scores
                 "gold": gold,
                 "rationality": 1,  # hyperparameter
                 "text_candidates" : group
