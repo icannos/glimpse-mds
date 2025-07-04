@@ -25,8 +25,8 @@ def parse_summaries(path : Path) -> pd.DataFrame:
     summaries = pd.read_csv(path)
 
     # check if the dataframe has the right columns
-    if not all(col in summaries.columns for col in ["id", "id_text", "id_candidate", "summary"]):
-        raise ValueError("The dataframe must have columns ['id', 'id_text', 'id_candidate', 'summary']")
+    if not all(col in summaries.columns for col in ["id", "text", "id_candidate", "summary"]):
+        raise ValueError("The dataframe must have columns ['id', 'text', 'id_candidate', 'summary']")
 
     return summaries
 

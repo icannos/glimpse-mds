@@ -71,6 +71,9 @@ class RSAReranking:
         :return: tensor of shape (batch_size) containing the likelihoods of y given x
         """
 
+        # Ensure x,y are pure Python lists of strings (not pandas.Series, np.ndarray, etc.)
+        x = [str(item) for item in list(x)]
+        y = [str(item) for item in list(y)]
         assert len(x) == len(y), "x and y must have the same length"
 
         loss_fn = torch.nn.CrossEntropyLoss(reduction="none")
@@ -81,14 +84,14 @@ class RSAReranking:
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=1024
+            max_length=1024,
         )
         y = self.tokenizer(
             y,
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=1024
+            max_length=1024,
         )
 
         # Move all tensors to the correct device
