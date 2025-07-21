@@ -3,6 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 from rouge_score import rouge_scorer
+from tqdm import tqdm
+
+import sys, os.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 
 def sanitize_model_name(model_name: str) -> str:
@@ -17,7 +21,7 @@ def sanitize_model_name(model_name: str) -> str:
 # logging.basicConfig(stream=stdout, level=logging.)
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--summaries", type=Path, default="")
+    parser.add_argument("--summaries", type=Path, default="data/GLIMPSE_results_2017.csv")
 
     args = parser.parse_args()
     return args
@@ -39,48 +43,22 @@ def parse_summaries(path: Path):
     return df
 
 
-def evaluate_rouge(
-    df,
-):
-    # make a list of the tuples (text, summary)
-
+def evaluate_rouge(df):
     texts = df.gold.tolist()
     summaries = df.summary.tolist()
 
-    # rouges
     metrics = {"rouge1": [], "rouge2": [], "rougeL": [], "rougeLsum": []}
 
     rouges = rouge_scorer.RougeScorer(
         ["rouge1", "rouge2", "rougeL", "rougeLsum"], use_stemmer=True
     )
 
-    metrics["rouge1"].extend(
-        [
-            rouges.score(summary, text)["rouge1"].fmeasure
-            for summary, text in zip(summaries, texts)
-        ]
-    )
-    metrics["rouge2"].extend(
-        [
-            rouges.score(summary, text)["rouge2"].fmeasure
-            for summary, text in zip(summaries, texts)
-        ]
-    )
-    metrics["rougeL"].extend(
-        [
-            rouges.score(summary, text)["rougeL"].fmeasure
-            for summary, text in zip(summaries, texts)
-        ]
-    )
-    metrics["rougeLsum"].extend(
-        [
-            rouges.score(summary, text)["rougeLsum"].fmeasure
-            for summary, text in zip(summaries, texts)
-        ]
-    )
-
-    # compute the mean of the metrics
-    # metrics = {k: sum(v) / len(v) for k, v in metrics.items()}
+    for summary, text in tqdm(zip(summaries, texts), total=len(texts), desc="Evaluating ROUGE"):
+        scores = rouges.score(summary, text)
+        metrics["rouge1"].append(scores["rouge1"].fmeasure)
+        metrics["rouge2"].append(scores["rouge2"].fmeasure)
+        metrics["rougeL"].append(scores["rougeL"].fmeasure)
+        metrics["rougeLsum"].append(scores["rougeLsum"].fmeasure)
 
     return metrics
 

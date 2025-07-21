@@ -31,9 +31,9 @@ def parse_args():
     parser.add_argument(
         "--question",
         type=str,
-        default="repetition",
+        default="2",
     )
-    parser.add_argument("--summaries", type=Path, default="")
+    parser.add_argument("--summaries", type=Path, default="data/GLIMPSE_results_from_pk.csv",)
     parser.add_argument("--select", type=str, default="*")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--device", type=str, default="cuda")
@@ -51,15 +51,15 @@ def parse_summaries(path: Path):
     df = pd.read_csv(path).dropna()
 
     # check if the csv file has the correct columns
-    if not all([col in df.columns for col in ["text", "summary"]]):
-        raise ValueError("The csv file must have the columns 'text' and 'summary'.")
+    if not all([col in df.columns for col in ["gold", "summary"]]):
+        raise ValueError("The csv file must have the columns 'gold' and 'summary'.")
 
     return df
 
 
 def evaluate_classification_task(model, tokenizer, question, df, batch_size):
 
-    texts = df.text.tolist()
+    texts = df.gold.tolist()
     summaries = df.summary.tolist()
 
     template = "premise: {premise} hypothesis: {hypothesis}"
